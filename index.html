@@ -1,0 +1,1623 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SYS.CAP // Server Capacity & Architecture Learning Lab</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter & JetBrains Mono for authentic engineering aesthetics -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            charcoal: {
+              950: '#0d0e11',
+              900: '#131519', // Primary Dark Grey Tone 1
+              850: '#181b20',
+              800: '#1f232a', // Secondary Dark Grey Tone 2
+              750: '#262b33',
+              700: '#2f3540', // Elevated Surface / Border Tone
+              600: '#404856',
+              500: '#5a6476',
+              400: '#8590a2',
+              300: '#b0b8c5',
+              200: '#d5dae2',
+              100: '#eef0f4',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Dual-Tone Dark Grey Custom Styling & Range Sliders */
+    :root {
+      --tone-bg-deep: #131519;
+      --tone-bg-surface: #1f232a;
+      --tone-bg-elevated: #272c35;
+      --tone-border: #323844;
+      --tone-text-main: #eef0f4;
+      --tone-text-muted: #8e98a8;
+      --tone-accent: #d5dae2;
+      --tone-accent-soft: rgba(213, 218, 226, 0.12);
+    }
+
+    body[data-accent="amber"] {
+      --tone-accent: #f59e0b;
+      --tone-accent-soft: rgba(245, 158, 11, 0.14);
+    }
+
+    body[data-accent="emerald"] {
+      --tone-accent: #10b981;
+      --tone-accent-soft: rgba(16, 185, 129, 0.14);
+    }
+
+    body {
+      background-color: var(--tone-bg-deep);
+      color: var(--tone-text-main);
+      background-image: 
+        radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.04) 1px, transparent 0);
+      background-size: 24px 24px;
+    }
+
+    /* Custom Dual-Tone Cards */
+    .duotone-card {
+      background: linear-gradient(180deg, #21252d 0%, #191c22 100%);
+      border: 1px solid #2f3540;
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.6), inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+    }
+
+    .duotone-well {
+      background-color: #121418;
+      border: 1px solid #262b34;
+      box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.55);
+    }
+
+    .duotone-pill {
+      background-color: #262b34;
+      border: 1px solid #373e4b;
+    }
+
+    .accent-text {
+      color: var(--tone-accent);
+    }
+
+    .accent-bg {
+      background-color: var(--tone-accent);
+      color: #121418;
+    }
+
+    .accent-border {
+      border-color: var(--tone-accent);
+    }
+
+    .accent-glow {
+      background-color: var(--tone-accent-soft);
+      border: 1px solid var(--tone-accent);
+    }
+
+    /* Custom Range Sliders */
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 8px;
+      background: #121418;
+      border-radius: 999px;
+      border: 1px solid #2e3440;
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 6px;
+      background: var(--tone-accent);
+      border: 2px solid #121418;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+      cursor: pointer;
+      transition: transform 0.15s ease, background-color 0.15s ease;
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.1);
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      border-radius: 6px;
+      background: var(--tone-accent);
+      border: 2px solid #121418;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+      cursor: pointer;
+      transition: transform 0.15s ease;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #131519;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #2f3540;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #404856;
+    }
+
+    /* Smooth Bar Transitions */
+    .bar-segment {
+      transition: width 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+  </style>
+</head>
+<body data-accent="silver" class="min-h-screen flex flex-col font-sans antialiased selection:bg-charcoal-600 selection:text-white">
+
+  <!-- TOP HEADER & GLOBAL CONTROLS -->
+  <header class="sticky top-0 z-30 bg-charcoal-900/95 backdrop-blur-md border-b border-charcoal-700">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      
+      <!-- Brand Identity -->
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg duotone-well flex items-center justify-center border border-charcoal-600 shadow-inner">
+            <svg class="w-5 h-5 accent-text" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" />
+            </svg>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="font-mono font-bold tracking-tight text-lg text-charcoal-100">SYS.CAP</span>
+              <span class="text-[11px] font-mono uppercase px-2 py-0.5 rounded bg-charcoal-800 text-charcoal-300 border border-charcoal-700">v2.4 Duotone</span>
+            </div>
+            <p class="text-xs text-charcoal-400">Server Traffic, RAM, Storage & Capacity Learning Workbench</p>
+          </div>
+        </div>
+
+        <!-- Mobile Accent Switcher -->
+        <div class="flex lg:hidden items-center gap-1.5 bg-charcoal-850 p-1 rounded-lg border border-charcoal-700">
+          <button onclick="setAccent('silver')" title="Monochrome Silver" class="w-6 h-6 rounded bg-charcoal-200 border border-black"></button>
+          <button onclick="setAccent('amber')" title="Industrial Amber" class="w-6 h-6 rounded bg-amber-500 border border-black"></button>
+          <button onclick="setAccent('emerald')" title="Terminal Emerald" class="w-6 h-6 rounded bg-emerald-500 border border-black"></button>
+        </div>
+      </div>
+
+      <!-- Navigation Mode Tabs -->
+      <nav class="flex flex-wrap items-center gap-1.5 bg-charcoal-950 p-1.5 rounded-xl border border-charcoal-750">
+        <button id="tab-btn-planner" onclick="switchTab('planner')" class="tab-btn flex-1 sm:flex-initial px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all flex items-center justify-center gap-2 accent-bg font-semibold shadow">
+          <span class="font-mono text-xs opacity-75">01</span>
+          <span>Capacity Calculator</span>
+        </button>
+        <button id="tab-btn-simulator" onclick="switchTab('simulator')" class="tab-btn flex-1 sm:flex-initial px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all flex items-center justify-center gap-2 text-charcoal-300 hover:text-white hover:bg-charcoal-800">
+          <span class="font-mono text-xs opacity-75">02</span>
+          <span>Reverse Stress Test</span>
+        </button>
+        <button id="tab-btn-academy" onclick="switchTab('academy')" class="tab-btn flex-1 sm:flex-initial px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all flex items-center justify-center gap-2 text-charcoal-300 hover:text-white hover:bg-charcoal-800">
+          <span class="font-mono text-xs opacity-75">03</span>
+          <span>Learning Guide & Formulas</span>
+        </button>
+      </nav>
+
+      <!-- Utility Actions & Contrast Tone Selector -->
+      <div class="hidden lg:flex items-center gap-3">
+        <div class="flex items-center gap-1.5 bg-charcoal-950 px-2.5 py-1.5 rounded-lg border border-charcoal-750">
+          <span class="text-[11px] font-mono text-charcoal-400 mr-1">TONE:</span>
+          <button onclick="setAccent('silver')" class="w-4 h-4 rounded-full bg-charcoal-200 ring-2 ring-offset-2 ring-offset-charcoal-900 ring-transparent hover:ring-charcoal-400 transition" title="Duotone Platinum Grey"></button>
+          <button onclick="setAccent('amber')" class="w-4 h-4 rounded-full bg-amber-500 ring-2 ring-offset-2 ring-offset-charcoal-900 ring-transparent hover:ring-amber-400 transition" title="Duotone Amber Grey"></button>
+          <button onclick="setAccent('emerald')" class="w-4 h-4 rounded-full bg-emerald-500 ring-2 ring-offset-2 ring-offset-charcoal-900 ring-transparent hover:ring-emerald-400 transition" title="Duotone Emerald Grey"></button>
+        </div>
+
+        <button onclick="copySpecReport()" class="px-3 py-2 rounded-lg text-xs font-mono font-medium duotone-pill text-charcoal-200 hover:bg-charcoal-700 hover:text-white transition flex items-center gap-2">
+          <svg class="w-3.5 h-3.5 accent-text" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+          </svg>
+          <span>Export Spec</span>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- MAIN WORKSPACE CONTAINER -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- ========================================== -->
+    <!-- TAB 1: FULL-STACK CAPACITY CALCULATOR      -->
+    <!-- ========================================== -->
+    <section id="view-planner" class="space-y-6">
+
+      <!-- Real-World Workload Presets Bar -->
+      <div class="duotone-card rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-mono uppercase tracking-wider accent-text font-semibold">Real-World Architecture Templates</span>
+          </div>
+          <p class="text-xs text-charcoal-400 mt-0.5">Load a pre-configured scenario to see how traffic, RAM, and storage scale across different apps:</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <button onclick="loadPreset('hobby')" id="preset-hobby" class="preset-btn px-3 py-1.5 rounded-lg text-xs font-mono duotone-pill text-charcoal-200 hover:border-charcoal-400 transition">
+            Indie Blog / SaaS (5k DAU)
+          </button>
+          <button onclick="loadPreset('ecommerce')" id="preset-ecommerce" class="preset-btn px-3 py-1.5 rounded-lg text-xs font-mono accent-glow text-white transition">
+            E-Commerce Store (50k DAU)
+          </button>
+          <button onclick="loadPreset('api')" id="preset-api" class="preset-btn px-3 py-1.5 rounded-lg text-xs font-mono duotone-pill text-charcoal-200 hover:border-charcoal-400 transition">
+            High-Scale API (500k DAU)
+          </button>
+          <button onclick="loadPreset('media')" id="preset-media" class="preset-btn px-3 py-1.5 rounded-lg text-xs font-mono duotone-pill text-charcoal-200 hover:border-charcoal-400 transition">
+            Media / Social App (150k DAU)
+          </button>
+        </div>
+      </div>
+
+      <!-- LIVE EXECUTIVE SUMMARY TELEMETRY BAR (Sticky on desktop scroll or prominent top grid) -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <!-- Metric 1: Peak RPS -->
+        <div class="duotone-card rounded-xl p-3.5 flex flex-col justify-between">
+          <div class="flex items-center justify-between text-charcoal-400 text-xs font-mono">
+            <span>PEAK TRAFFIC</span>
+            <span class="px-1.5 py-0.5 rounded bg-charcoal-850 text-[10px] text-charcoal-300">RPS</span>
+          </div>
+          <div class="my-2">
+            <div id="sum-peak-rps" class="text-2xl font-mono font-bold text-white tracking-tight">116</div>
+            <div class="text-[11px] text-charcoal-400 font-mono">Avg: <span id="sum-avg-rps" class="text-charcoal-200">29</span> req/s</div>
+          </div>
+          <div class="text-[11px] text-charcoal-400 border-t border-charcoal-750 pt-1.5 flex items-center justify-between">
+            <span>Concurrent:</span>
+            <span id="sum-concurrent" class="font-mono text-charcoal-200 font-medium">14 conn</span>
+          </div>
+        </div>
+
+        <!-- Metric 2: CPU Cores -->
+        <div class="duotone-card rounded-xl p-3.5 flex flex-col justify-between">
+          <div class="flex items-center justify-between text-charcoal-400 text-xs font-mono">
+            <span>COMPUTE (CPU)</span>
+            <span class="px-1.5 py-0.5 rounded bg-charcoal-850 text-[10px] text-charcoal-300">vCPU</span>
+          </div>
+          <div class="my-2">
+            <div id="sum-cpu-cores" class="text-2xl font-mono font-bold accent-text tracking-tight">4 Cores</div>
+            <div class="text-[11px] text-charcoal-400 font-mono">Raw need: <span id="sum-cpu-raw" class="text-charcoal-200">2.4</span></div>
+          </div>
+          <div class="text-[11px] text-charcoal-400 border-t border-charcoal-750 pt-1.5 flex items-center justify-between">
+            <span>Target Load:</span>
+            <span class="font-mono text-charcoal-200">≤ 70%</span>
+          </div>
+        </div>
+
+        <!-- Metric 3: Total RAM -->
+        <div class="duotone-card rounded-xl p-3.5 flex flex-col justify-between">
+          <div class="flex items-center justify-between text-charcoal-400 text-xs font-mono">
+            <span>SYSTEM MEMORY</span>
+            <span class="px-1.5 py-0.5 rounded bg-charcoal-850 text-[10px] text-charcoal-300">RAM</span>
+          </div>
+          <div class="my-2">
+            <div id="sum-ram-tier" class="text-2xl font-mono font-bold text-white tracking-tight">8 GB</div>
+            <div class="text-[11px] text-charcoal-400 font-mono">Exact: <span id="sum-ram-exact" class="text-charcoal-200">6.2 GB</span></div>
+          </div>
+          <div class="text-[11px] text-charcoal-400 border-t border-charcoal-750 pt-1.5 flex items-center justify-between">
+            <span>DB Cache:</span>
+            <span id="sum-ram-db" class="font-mono text-charcoal-200">3.0 GB</span>
+          </div>
+        </div>
+
+        <!-- Metric 4: Storage Capacity -->
+        <div class="duotone-card rounded-xl p-3.5 flex flex-col justify-between">
+          <div class="flex items-center justify-between text-charcoal-400 text-xs font-mono">
+            <span>DISK STORAGE</span>
+            <span class="px-1.5 py-0.5 rounded bg-charcoal-850 text-[10px] text-charcoal-300">NVMe</span>
+          </div>
+          <div class="my-2">
+            <div id="sum-storage-total" class="text-2xl font-mono font-bold text-white tracking-tight">240 GB</div>
+            <div class="text-[11px] text-charcoal-400 font-mono">IOPS: <span id="sum-iops" class="text-charcoal-200">~350</span>/s</div>
+          </div>
+          <div class="text-[11px] text-charcoal-400 border-t border-charcoal-750 pt-1.5 flex items-center justify-between">
+            <span>Horizon:</span>
+            <span id="sum-horizon-label" class="font-mono text-charcoal-200">1 Year</span>
+          </div>
+        </div>
+
+        <!-- Metric 5: Network Bandwidth -->
+        <div class="duotone-card rounded-xl p-3.5 flex flex-col justify-between">
+          <div class="flex items-center justify-between text-charcoal-400 text-xs font-mono">
+            <span>BANDWIDTH</span>
+            <span class="px-1.5 py-0.5 rounded bg-charcoal-850 text-[10px] text-charcoal-300">NET</span>
+          </div>
+          <div class="my-2">
+            <div id="sum-bandwidth-mbps" class="text-2xl font-mono font-bold text-white tracking-tight">42 Mbps</div>
+            <div class="text-[11px] text-charcoal-400 font-mono">Peak Egress</div>
+          </div>
+          <div class="text-[11px] text-charcoal-400 border-t border-charcoal-750 pt-1.5 flex items-center justify-between">
+            <span>Monthly:</span>
+            <span id="sum-bandwidth-tb" class="font-mono text-charcoal-200">3.4 TB/mo</span>
+          </div>
+        </div>
+
+        <!-- Metric 6: Recommended Topology -->
+        <div class="duotone-card rounded-xl p-3.5 flex flex-col justify-between border-l-2 accent-border">
+          <div class="flex items-center justify-between text-charcoal-400 text-xs font-mono">
+            <span>ARCHITECTURE</span>
+            <span class="w-2 h-2 rounded-full accent-bg"></span>
+          </div>
+          <div class="my-2">
+            <div id="sum-topology" class="text-base font-mono font-bold accent-text leading-snug">Single Node VPS</div>
+            <div id="sum-topology-sub" class="text-[11px] text-charcoal-300 font-mono mt-0.5">Vertical Scale OK</div>
+          </div>
+          <div class="text-[11px] text-charcoal-400 border-t border-charcoal-750 pt-1.5 flex items-center justify-between">
+            <span>Redundancy:</span>
+            <span id="sum-ha-status" class="font-mono text-charcoal-200">Standard</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- MAIN 3-COLUMN CALCULATOR & LEARNING MODULES -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- ======================================================= -->
+        <!-- MODULE 1: TRAFFIC, CONCURRENCY & CPU CORES              -->
+        <!-- ======================================================= -->
+        <div class="duotone-card rounded-2xl p-5 flex flex-col justify-between space-y-5">
+          <div class="space-y-4">
+            <!-- Module Header -->
+            <div class="flex items-start justify-between border-b border-charcoal-750 pb-3.5">
+              <div>
+                <span class="text-[11px] font-mono uppercase tracking-widest text-charcoal-400">Module 01 // Throughput</span>
+                <h2 class="text-lg font-bold text-white mt-0.5">Traffic & CPU Sizing</h2>
+              </div>
+              <span class="px-2.5 py-1 rounded-md text-xs font-mono duotone-well text-charcoal-200">Little's Law</span>
+            </div>
+
+            <!-- Slider 1: Daily Active Users -->
+            <div class="space-y-1.5">
+              <div class="flex justify-between text-xs">
+                <label for="inp-dau" class="font-medium text-charcoal-200">Daily Active Users (DAU)</label>
+                <span id="val-dau" class="font-mono font-semibold accent-text">50,000 users</span>
+              </div>
+              <input id="inp-dau" type="range" min="500" max="1000000" step="500" value="50000" oninput="recalculateAll()" />
+              <div class="flex justify-between text-[10px] font-mono text-charcoal-500">
+                <span>500</span>
+                <span>100k</span>
+                <span>500k</span>
+                <span>1M DAU</span>
+              </div>
+            </div>
+
+            <!-- Slider 2: Requests Per User Per Day -->
+            <div class="space-y-1.5">
+              <div class="flex justify-between text-xs">
+                <label for="inp-reqs-per-user" class="font-medium text-charcoal-200">Avg Requests / User / Day</label>
+                <span id="val-reqs-per-user" class="font-mono font-semibold text-white">50 reqs</span>
+              </div>
+              <input id="inp-reqs-per-user" type="range" min="5" max="300" step="5" value="50" oninput="recalculateAll()" />
+              <p class="text-[11px] text-charcoal-400">Includes page views, API calls, and background XHR fetches.</p>
+            </div>
+
+            <!-- Slider 3: Peak Traffic Spike Multiplier -->
+            <div class="space-y-1.5">
+              <div class="flex justify-between text-xs">
+                <label for="inp-peak-mult" class="font-medium text-charcoal-200">Peak Hour Traffic Multiplier</label>
+                <span id="val-peak-mult" class="font-mono font-semibold text-white">4.0x Avg</span>
+              </div>
+              <input id="inp-peak-mult" type="range" min="1.5" max="12" step="0.5" value="4.0" oninput="recalculateAll()" />
+              <p class="text-[11px] text-charcoal-400">Traffic is never flat! 3x–5x is normal daytime peak; 10x+ is a flash sale.</p>
+            </div>
+
+            <!-- Slider 4: Avg Server Response Time (Latency) -->
+            <div class="space-y-1.5">
+              <div class="flex justify-between text-xs">
+                <label for="inp-latency" class="font-medium text-charcoal-200">Avg Server Response Time</label>
+                <span id="val-latency" class="font-mono font-semibold text-white">120 ms</span>
+              </div>
+              <input id="inp-latency" type="range" min="10" max="1000" step="10" value="120" oninput="recalculateAll()" />
+              <p class="text-[11px] text-charcoal-400">Total time to finish a request (CPU compute + waiting on DB).</p>
+            </div>
+
+            <!-- Slider 5: CPU Compute Time per Request -->
+            <div class="space-y-1.5">
+              <div class="flex justify-between text-xs">
+                <label for="inp-cpu-ms" class="font-medium text-charcoal-200">Pure CPU Work per Request</label>
+                <span id="val-cpu-ms" class="font-mono font-semibold text-white">15 ms</span>
+              </div>
+              <input id="inp-cpu-ms" type="range" min="1" max="150" step="1" value="15" oninput="recalculateAll()" />
+              <p class="text-[11px] text-charcoal-400">1 CPU core has 1,000ms of compute time per second (e.g., 15ms = ~66 RPS/core at 100%).</p>
+            </div>
+
+            <!-- Slider 6: Avg Response Payload Size -->
+            <div class="space-y-1.5">
+              <div class="flex justify-between text-xs">
+                <label for="inp-payload" class="font-medium text-charcoal-200">Avg Response Size (KB)</label>
+                <span id="val-payload" class="font-mono font-semibold text-white">45 KB</span>
+              </div>
+              <input id="inp-payload" type="range" min="2" max="1000" step="2" value="45" oninput="recalculateAll()" />
+              <div class="flex justify-between text-[10px] font-mono text-charcoal-500">
+                <span>2KB (JSON)</span>
+                <span>50KB (Web Page)</span>
+                <span>1000KB (Media)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Interactive Learning Breakdown Box -->
+          <div class="duotone-well rounded-xl p-3.5 space-y-2.5 border border-charcoal-750">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-mono uppercase tracking-wider accent-text font-semibold">How Traffic & CPU Math Works</span>
+              <span class="text-[11px] font-mono text-charcoal-400">Live Formula</span>
+            </div>
+            <div class="text-xs font-mono space-y-1.5 text-charcoal-300">
+              <div class="flex justify-between">
+                <span class="text-charcoal-400">1. Daily Requests:</span>
+                <span id="math-daily-reqs">2,500,000 / day</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-charcoal-400">2. Peak RPS (÷ 86,400s):</span>
+                <span id="math-peak-rps">115.7 req/sec</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-charcoal-400">3. Concurrent Sockets:</span>
+                <span id="math-littles-law">115.7 × 0.12s = 14</span>
+              </div>
+              <div class="flex justify-between border-t border-charcoal-800 pt-1.5 text-white">
+                <span>4. Safe Cores (70% max):</span>
+                <span id="math-cores-needed" class="accent-text font-bold">2.5 → 4 vCPUs</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ======================================================= -->
+        <!-- MODULE 2: SYSTEM MEMORY (RAM) SIZING                    -->
+        <!-- ======================================================= -->
+        <div class="duotone-card rounded-2xl p-5 flex flex-col justify-between space-y-5">
+          <div class="space-y-4">
+            <!-- Module Header -->
+            <div class="flex items-start justify-between border-b border-charcoal-750 pb-3.5">
+              <div>
+                <span class="text-[11px] font-mono uppercase tracking-widest text-charcoal-400">Module 02 // Memory</span>
+                <h2 class="text-lg font-bold text-white mt-0.5">RAM Allocation & Cache</h2>
+              </div>
+              <span class="px-2.5 py-1 rounded-md text-xs font-mono duotone-well text-charcoal-200">Working Set</span>
+            </div>
+
+            <!-- Runtime Stack Selector -->
+            <div class="space-y-1.5">
+              <label class="text-xs font-medium text-charcoal-200 block">Backend Runtime / Memory Profile</label>
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                <button onclick="setRuntimeMemory(35, 'Go / Rust')" id="rt-go" class="rt-btn px-2 py-2 rounded-lg text-xs font-mono duotone-pill text-charcoal-300 hover:text-white transition text-center">
+                  <div>Go/Rust</div>
+                  <div class="text-[10px] text-charcoal-400">~35MB/w</div>
+                </button>
+                <button onclick="setRuntimeMemory(110, 'Node.js')" id="rt-node" class="rt-btn px-2 py-2 rounded-lg text-xs font-mono accent-glow text-white transition text-center">
+                  <div>Node.js</div>
+                  <div class="text-[10px] opacity-80">~110MB/w</div>
+                </button>
+                <button onclick="setRuntimeMemory(160, 'Python/Ruby')" id="rt-py" class="rt-btn px-2 py-2 rounded-lg text-xs font-mono duotone-pill text-charcoal-300 hover:text-white transition text-center">
+                  <div>Python</div>
+                  <div class="text-[10px] text-charcoal-400">~160MB/w</div>
+                </button>
+                <button onclick="setRuntimeMemory(380, 'Java / JVM')" id="rt-java" class="rt-btn px-2 py-2 rounded-lg text-xs font-mono duotone-pill text-charcoal-300 hover:text-white transition text-center">
+                  <div>Java/JVM</div>
+                  <div class="text-[10px] text-charcoal-400">~380MB/w</div>
+                </button>
+              </div>
+            </div>
+
+            <!-- Slider 1: Memory per App Worker / Process -->
+            <div class="space-y-1.5">
+              <div class="flex justify-between text-xs">
+                <label for="inp-worker-ram" class="font-medium text-charcoal-200">RAM per App Worker Process</label>
+                <span id="val-worker-ram" class="font-mono font-semibold text-white">110 MB</span>
+              </div>
+              <input id="inp-worker-ram" type="range" min="20" max="1000" step="10" value="110" oninput="recalculateAll()" />
+              <p class="text-[11px] text-charcoal-400">We automatically spawn 2x workers per vCPU core (<span id="lbl-worker-count" class="font-mono text-charcoal-200">8 workers</span>) + connection buffers.</p>
+            </div>
+
+            <!-- Slider 2: Active Database Size on Disk -->
+            <div class="space-y-1.5">
+              <div class="flex justify-between text-xs">
+                <label for="inp-db-size" class="font-medium text-charcoal-200">Active Database Size (Indexes + Tables)</label>
+                <span id="val-db-size" class="font-mono font-semibold text-white">15 GB</span>
+              </div>
+              <input id="inp-db-size" type="range" min="1" max="500" step="1" value="15" oninput="recalculateAll()" />
+            </div>
+
+            <!-- Slider 3: DB Working Set Cached in RAM (%) -->
+            <div class="space-y-1.5">
+              <div class="flex justify-between text-xs">
+                <label for="inp-db-cache-pct" class="font-medium text-charcoal-200">DB "Hot Working Set" in RAM</label>
+                <span id="val-db-cache-pct" class="font-mono font-semibold accent-text">20% (3.0 GB)</span>
+              </div>
+              <input id="inp-db-cache-pct" type="range" min="5" max="100" step="5" value="20" oninput="recalculateAll()" />
+              <p class="text-[11px] text-charcoal-400">Databases (Postgres/MySQL) keep frequently read indexes in RAM (`shared_buffers`) to avoid slow disk reads.</p>
+            </div>
+
+            <!-- Slider 4: In-Memory Cache (Redis / Memcached) -->
+            <div class="space-y-1.5">
+              <div class="flex justify-between text-xs">
+                <label for="inp-redis-ram" class="font-medium text-charcoal-200">Dedicated Cache (Redis / Sessions)</label>
+                <span id="val-redis-ram" class="font-mono font-semibold text-white">1.0 GB</span>
+              </div>
+              <input id="inp-redis-ram" type="range" min="0" max="64" step="0.5" value="1.0" oninput="recalculateAll()" />
+            </div>
+
+            <!-- Visual Stacked RAM Bar -->
+            <div class="pt-2 space-y-2">
+              <div class="flex justify-between text-xs font-mono">
+                <span class="text-charcoal-300">RAM Allocation Map</span>
+                <span id="ram-map-summary" class="text-white font-semibold">6.2 GB → 8 GB Tier</span>
+              </div>
+              <div class="h-4 w-full rounded-lg duotone-well overflow-hidden flex p-0.5 gap-0.5">
+                <div id="bar-ram-os" class="bar-segment h-full bg-charcoal-500 rounded-l" style="width: 15%" title="Linux OS Kernel & System"></div>
+                <div id="bar-ram-app" class="bar-segment h-full bg-charcoal-300" style="width: 25%" title="App Workers & Concurrency"></div>
+                <div id="bar-ram-db" class="bar-segment h-full accent-bg" style="width: 35%" title="Database Buffer Pool"></div>
+                <div id="bar-ram-redis" class="bar-segment h-full bg-charcoal-400" style="width: 10%" title="Redis / In-Memory Cache"></div>
+                <div id="bar-ram-free" class="bar-segment h-full bg-charcoal-800 rounded-r" style="width: 15%" title="Safety Headroom"></div>
+              </div>
+              <!-- Legend -->
+              <div class="grid grid-cols-2 gap-1.5 text-[11px] font-mono text-charcoal-300 pt-1">
+                <div class="flex items-center gap-1.5">
+                  <span class="w-2.5 h-2.5 rounded-sm bg-charcoal-500 inline-block"></span>
+                  <span>OS Base: <strong id="leg-ram-os" class="text-white">0.8 GB</strong></span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <span class="w-2.5 h-2.5 rounded-sm bg-charcoal-300 inline-block"></span>
+                  <span>App/Conn: <strong id="leg-ram-app" class="text-white">1.1 GB</strong></span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <span class="w-2.5 h-2.5 rounded-sm accent-bg inline-block"></span>
+                  <span>DB Pool: <strong id="leg-ram-db" class="text-white">3.0 GB</strong></span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <span class="w-2.5 h-2.5 rounded-sm bg-charcoal-400 inline-block"></span>
+                  <span>Redis+30% Safe: <strong id="leg-ram-other" class="text-white">2.3 GB</strong></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- RAM Educational Insight -->
+          <div class="duotone-well rounded-xl p-3.5 space-y-1.5 border border-charcoal-750">
+            <div class="text-[11px] font-mono uppercase tracking-wider accent-text font-semibold">Why Servers Run Out of RAM (OOM)</div>
+            <p class="text-xs text-charcoal-300 leading-relaxed">
+              Reading from RAM takes <span class="font-mono text-white">~100 ns</span>, while reading from NVMe SSD takes <span class="font-mono text-white">~100,000 ns</span> (1,000× slower). Keep at least <span class="font-mono text-white">20%</span> of your active DB indexes in RAM plus <span class="font-mono text-white">25% free OS page cache</span> to prevent swap thrashing during traffic spikes.
+            </p>
+          </div>
+        </div>
+
+        <!-- ======================================================= -->
+        <!-- MODULE 3: STORAGE, MEDIA, LOGS & IOPS                   -->
+        <!-- ======================================================= -->
+        <div class="duotone-card rounded-2xl p-5 flex flex-col justify-between space-y-5">
+          <div class="space-y-4">
+            <!-- Module Header -->
+            <div class="flex items-start justify-between border-b border-charcoal-750 pb-3.5">
+              <div>
+                <span class="text-[11px] font-mono uppercase tracking-widest text-charcoal-400">Module 03 // Persistence</span>
+                <h2 class="text-lg font-bold text-white mt-0.5">Storage, Backups & IOPS</h2>
+              </div>
+              <!-- Horizon Toggle -->
+              <div class="flex items-center bg-charcoal-950 p-0.5 rounded-lg border border-charcoal-750 text-[11px] font-mono">
+                <button onclick="setHorizon(1)" id="hz-1" class="hz-btn px-2 py-1 rounded accent-bg font-bold">1Y</button>
+                <button onclick="setHorizon(2)" id="hz-2" class="hz-btn px-2 py-1 rounded text-charcoal-400 hover:text-white">2Y</button>
+                <button onclick="setHorizon(3)" id="hz-3" class="hz-btn px-2 py-1 rounded text-charcoal-400 hover:text-white">3Y</button>
+              </div>
+            </div>
+
+            <!-- Slider 1: New User/Entity Records Growth -->
+            <div class="space-y-1.5">
+              <div class="flex justify-between text-xs">
+                <label for="inp-daily-uploads" class="font-medium text-charcoal-200">Daily Media / File Uploads</label>
+                <span id="val-daily-uploads" class="font-mono font-semibold text-white">250 MB / day</span>
+              </div>
+              <input id="inp-daily-uploads" type="range" min="0" max="10000" step="50" value="250" oninput="recalculateAll()" />
+              <p class="text-[11px] text-charcoal-400">User avatars, PDFs, attachments, or product photos stored per day.</p>
+            </div>
+
+            <!-- Slider 2: Log Size per Request -->
+            <div class="space-y-1.5">
+              <div class="flex justify-between text-xs">
+                <label for="inp-log-bytes" class="font-medium text-charcoal-200">Access & App Log per Request</label>
+                <span id="val-log-bytes" class="font-mono font-semibold text-white">500 Bytes</span>
+              </div>
+              <input id="inp-log-bytes" type="range" min="100" max="4000" step="100" value="500" oninput="recalculateAll()" />
+            </div>
+
+            <!-- Slider 3: Log Retention Days -->
+            <div class="space-y-1.5">
+              <div class="flex justify-between text-xs">
+                <label for="inp-log-days" class="font-medium text-charcoal-200">Log Retention Window</label>
+                <span id="val-log-days" class="font-mono font-semibold text-white">30 Days</span>
+              </div>
+              <input id="inp-log-days" type="range" min="7" max="365" step="7" value="30" oninput="recalculateAll()" />
+              <p class="text-[11px] text-charcoal-400">High-RPS servers often fill disks from unrotated Nginx/JSON logs!</p>
+            </div>
+
+            <!-- Slider 4: Redundancy / Backup Multiplier -->
+            <div class="space-y-1.5">
+              <div class="flex justify-between text-xs">
+                <label for="inp-backup-mult" class="font-medium text-charcoal-200">Backups & Replication Factor</label>
+                <span id="val-backup-mult" class="font-mono font-semibold accent-text">2.0x (Primary + Snapshot)</span>
+              </div>
+              <input id="inp-backup-mult" type="range" min="1" max="4" step="0.5" value="2.0" oninput="recalculateAll()" />
+            </div>
+
+            <!-- Storage Breakdown List -->
+            <div class="duotone-well rounded-xl p-3.5 space-y-2 text-xs font-mono">
+              <div class="flex justify-between text-charcoal-300">
+                <span>1. Base OS + Containers + Swap:</span>
+                <span class="text-white">25.0 GB</span>
+              </div>
+              <div class="flex justify-between text-charcoal-300">
+                <span>2. Core Database (with growth):</span>
+                <span id="st-db-gb" class="text-white">22.5 GB</span>
+              </div>
+              <div class="flex justify-between text-charcoal-300">
+                <span>3. Media / Blobs (<span id="st-hz-txt">1 yr</span>):</span>
+                <span id="st-media-gb" class="text-white">91.3 GB</span>
+              </div>
+              <div class="flex justify-between text-charcoal-300">
+                <span>4. Rotating Logs (<span id="st-log-days-txt">30d</span>):</span>
+                <span id="st-logs-gb" class="text-white">37.5 GB</span>
+              </div>
+              <div class="flex justify-between text-charcoal-300">
+                <span>5. Backups & 20% Free Buffer:</span>
+                <span id="st-backup-gb" class="text-white">64.2 GB</span>
+              </div>
+              <div class="flex justify-between border-t border-charcoal-800 pt-2 text-sm font-bold text-white">
+                <span>Total Recommended Disk:</span>
+                <span id="st-total-gb" class="accent-text">240 GB NVMe</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Disk IOPS & Bandwidth Note -->
+          <div class="duotone-well rounded-xl p-3.5 space-y-1.5 border border-charcoal-750">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-mono uppercase tracking-wider accent-text font-semibold">Disk IOPS & Filesystem Rule</span>
+              <span id="st-disk-tier" class="text-[11px] font-mono text-charcoal-300">NVMe SSD</span>
+            </div>
+            <p class="text-xs text-charcoal-300 leading-relaxed">
+              Never fill a Linux SSD past <span class="font-mono text-white">80% capacity</span>—ext4/XFS performance degrades and database `VACUUM` or compaction jobs require free scratch space.
+            </p>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ARCHITECTURE BLUEPRINT & COST-SAVING ADVICE PANEL -->
+      <div class="duotone-card rounded-2xl p-6">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-charcoal-750 pb-4">
+          <div>
+            <span class="text-xs font-mono uppercase tracking-widest accent-text">Synthesized Infrastructure Blueprint</span>
+            <h3 class="text-xl font-bold text-white mt-0.5">What Server Setup Should You Actually Provision?</h3>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-mono text-charcoal-400">Bottleneck Risk:</span>
+            <span id="blueprint-bottleneck" class="px-3 py-1 rounded-full text-xs font-mono font-semibold duotone-well accent-text">Balanced Workload</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mt-5">
+          <!-- Box 1: Compute & Memory Spec -->
+          <div class="duotone-well rounded-xl p-4 space-y-2">
+            <div class="text-xs font-mono text-charcoal-400 uppercase">01 // Recommended Node Spec</div>
+            <div id="bp-node-title" class="text-base font-mono font-bold text-white">1× Dedicated 4 vCPU / 8 GB RAM</div>
+            <p id="bp-node-desc" class="text-xs text-charcoal-300 leading-relaxed">
+              Handles your peak of 116 RPS comfortably with 45% CPU headroom left for background cron jobs and TLS handshakes.
+            </p>
+          </div>
+
+          <!-- Box 2: Database & Caching Strategy -->
+          <div class="duotone-well rounded-xl p-4 space-y-2">
+            <div class="text-xs font-mono text-charcoal-400 uppercase">02 // Database & Memory Tuning</div>
+            <div id="bp-db-title" class="text-base font-mono font-bold text-white">Co-located DB + 3.0 GB Buffer Pool</div>
+            <p id="bp-db-desc" class="text-xs text-charcoal-300 leading-relaxed">
+              Configure Postgres `shared_buffers = 3GB` or MySQL `innodb_buffer_pool_size = 3GB` so 20% of your hot data never touches disk.
+            </p>
+          </div>
+
+          <!-- Box 3: Storage & Network Strategy -->
+          <div class="duotone-well rounded-xl p-4 space-y-2">
+            <div class="text-xs font-mono text-charcoal-400 uppercase">03 // Storage & Network Advice</div>
+            <div id="bp-net-title" class="text-base font-mono font-bold text-white">240 GB NVMe + CDN Offload</div>
+            <p id="bp-net-desc" class="text-xs text-charcoal-300 leading-relaxed">
+              Put Cloudflare or an Object Storage CDN in front of your static media to cut your 3.4 TB/mo egress bandwidth by up to 75%.
+            </p>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 2: REVERSE STRESS TEST ("CAN IT RUN?") -->
+    <!-- ========================================== -->
+    <section id="view-simulator" class="hidden space-y-6">
+      
+      <div class="duotone-card rounded-2xl p-6 space-y-6">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-charcoal-750 pb-4">
+          <div>
+            <span class="text-xs font-mono uppercase tracking-widest accent-text">Reverse Capacity Simulator</span>
+            <h2 class="text-xl font-bold text-white mt-0.5">"How Much Traffic Can My Existing Server Handle?"</h2>
+            <p class="text-xs text-charcoal-400 mt-1">Select a server hardware spec below and simulate traffic to see the exact point where CPU, RAM, or Network bottlenecks first.</p>
+          </div>
+          <!-- Quick Hardware Tier Presets -->
+          <div class="flex flex-wrap gap-2">
+            <button onclick="setSimHardware(1, 1, 25, 100)" class="px-3 py-1.5 rounded-lg text-xs font-mono duotone-pill text-charcoal-200 hover:text-white transition">
+              $5 Nano (1vCPU / 1GB)
+            </button>
+            <button onclick="setSimHardware(2, 4, 80, 1000)" class="px-3 py-1.5 rounded-lg text-xs font-mono duotone-pill text-charcoal-200 hover:text-white transition">
+              Starter (2vCPU / 4GB)
+            </button>
+            <button onclick="setSimHardware(4, 16, 200, 1000)" class="px-3 py-1.5 rounded-lg text-xs font-mono accent-glow text-white transition">
+              Pro Node (4vCPU / 16GB)
+            </button>
+            <button onclick="setSimHardware(16, 64, 1000, 10000)" class="px-3 py-1.5 rounded-lg text-xs font-mono duotone-pill text-charcoal-200 hover:text-white transition">
+              Heavy Metal (16vCPU / 64GB)
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <!-- Left: Hardware & App Characteristic Inputs (5 cols) -->
+          <div class="lg:col-span-5 space-y-4 duotone-well p-5 rounded-xl">
+            <div class="text-xs font-mono uppercase tracking-wider text-charcoal-400 border-b border-charcoal-800 pb-2">1. Your Server Hardware Specs</div>
+
+            <!-- Sim vCPUs -->
+            <div class="space-y-1">
+              <div class="flex justify-between text-xs">
+                <label for="sim-cpu" class="text-charcoal-200 font-medium">Server CPU Cores (vCPU)</label>
+                <span id="val-sim-cpu" class="font-mono font-bold accent-text">4 vCPUs</span>
+              </div>
+              <input id="sim-cpu" type="range" min="1" max="64" step="1" value="4" oninput="runReverseSimulation()" />
+            </div>
+
+            <!-- Sim RAM -->
+            <div class="space-y-1">
+              <div class="flex justify-between text-xs">
+                <label for="sim-ram" class="text-charcoal-200 font-medium">Server Total RAM (GB)</label>
+                <span id="val-sim-ram" class="font-mono font-bold text-white">16 GB</span>
+              </div>
+              <input id="sim-ram" type="range" min="1" max="256" step="1" value="16" oninput="runReverseSimulation()" />
+            </div>
+
+            <!-- Sim NIC Speed -->
+            <div class="space-y-1">
+              <div class="flex justify-between text-xs">
+                <label for="sim-nic" class="text-charcoal-200 font-medium">Network Port Speed (Mbps)</label>
+                <span id="val-sim-nic" class="font-mono font-bold text-white">1000 Mbps (1 Gbps)</span>
+              </div>
+              <input id="sim-nic" type="range" min="100" max="10000" step="100" value="1000" oninput="runReverseSimulation()" />
+            </div>
+
+            <div class="text-xs font-mono uppercase tracking-wider text-charcoal-400 border-b border-charcoal-800 pb-2 pt-3">2. Your Application Heaviness</div>
+
+            <!-- Sim CPU ms per request -->
+            <div class="space-y-1">
+              <div class="flex justify-between text-xs">
+                <label for="sim-app-cpu" class="text-charcoal-200 font-medium">CPU Time per Request (ms)</label>
+                <span id="val-sim-app-cpu" class="font-mono font-bold text-white">12 ms</span>
+              </div>
+              <input id="sim-app-cpu" type="range" min="1" max="200" step="1" value="12" oninput="runReverseSimulation()" />
+              <p class="text-[11px] text-charcoal-400">Cached SSR/API = 2–10ms | Heavy DB/Templates = 25–100ms.</p>
+            </div>
+
+            <!-- Sim Memory per Concurrent Connection + Base DB -->
+            <div class="space-y-1">
+              <div class="flex justify-between text-xs">
+                <label for="sim-base-ram" class="text-charcoal-200 font-medium">Base OS + DB + App Idle RAM (GB)</label>
+                <span id="val-sim-base-ram" class="font-mono font-bold text-white">3.5 GB</span>
+              </div>
+              <input id="sim-base-ram" type="range" min="0.5" max="64" step="0.5" value="3.5" oninput="runReverseSimulation()" />
+            </div>
+
+            <!-- Sim Live Traffic Stress Test Slider -->
+            <div class="pt-3 border-t border-charcoal-800 space-y-1.5">
+              <div class="flex justify-between text-xs">
+                <label for="sim-test-rps" class="accent-text font-mono font-bold uppercase">Inject Live Traffic Load (RPS)</label>
+                <span id="val-sim-test-rps" class="font-mono font-bold text-white">180 RPS</span>
+              </div>
+              <input id="sim-test-rps" type="range" min="10" max="3000" step="10" value="180" oninput="runReverseSimulation()" />
+              <p class="text-[11px] text-charcoal-400">Drag this slider to stress test your server and watch the resource gauges react in real time.</p>
+            </div>
+          </div>
+
+          <!-- Right: Bottleneck Gauges & Maximum Ceiling Readouts (7 cols) -->
+          <div class="lg:col-span-7 flex flex-col justify-between space-y-5">
+            
+            <!-- Maximum Sustainable Ceilings -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div class="duotone-well p-4 rounded-xl border border-charcoal-750">
+                <div class="text-xs font-mono text-charcoal-400">MAX SAFE RPS CEILING</div>
+                <div id="sim-max-rps" class="text-2xl font-mono font-bold accent-text mt-1">266 RPS</div>
+                <div id="sim-limiting-factor" class="text-[11px] font-mono text-charcoal-300 mt-1">Limited by: CPU Cores</div>
+              </div>
+              <div class="duotone-well p-4 rounded-xl border border-charcoal-750">
+                <div class="text-xs font-mono text-charcoal-400">MAX DAILY USERS (DAU)</div>
+                <div id="sim-max-dau" class="text-2xl font-mono font-bold text-white mt-1">~115,000</div>
+                <div class="text-[11px] font-mono text-charcoal-400 mt-1">Assuming 50 req/day & 4x peak</div>
+              </div>
+              <div class="duotone-well p-4 rounded-xl border border-charcoal-750">
+                <div class="text-xs font-mono text-charcoal-400">SERVER HEALTH STATUS</div>
+                <div id="sim-health-badge" class="text-lg font-mono font-bold text-emerald-400 mt-1">HEALTHY (67% Load)</div>
+                <div id="sim-health-sub" class="text-[11px] font-mono text-charcoal-400 mt-1">Latency stable at ~45ms</div>
+              </div>
+            </div>
+
+            <!-- Live Stress Test Telemetry Bars -->
+            <div class="duotone-well p-5 rounded-xl space-y-4">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-mono uppercase tracking-wider text-charcoal-300">Real-Time Resource Utilization at <strong id="sim-current-rps-lbl" class="text-white">180 RPS</strong></span>
+                <span class="text-xs font-mono text-charcoal-400">100% = Saturation / Crash</span>
+              </div>
+
+              <!-- CPU Gauge -->
+              <div class="space-y-1.5">
+                <div class="flex justify-between text-xs font-mono">
+                  <span class="text-charcoal-200">CPU Compute Utilization</span>
+                  <span id="sim-gauge-cpu-txt" class="text-white font-semibold">54% (2.16 / 4.0 Cores)</span>
+                </div>
+                <div class="h-3.5 w-full rounded-full bg-charcoal-900 border border-charcoal-700 overflow-hidden p-0.5">
+                  <div id="sim-gauge-cpu-bar" class="bar-segment h-full rounded-full accent-bg" style="width: 54%"></div>
+                </div>
+              </div>
+
+              <!-- RAM Gauge -->
+              <div class="space-y-1.5">
+                <div class="flex justify-between text-xs font-mono">
+                  <span class="text-charcoal-200">Memory (RAM) Pressure</span>
+                  <span id="sim-gauge-ram-txt" class="text-white font-semibold">33% (5.3 / 16.0 GB)</span>
+                </div>
+                <div class="h-3.5 w-full rounded-full bg-charcoal-900 border border-charcoal-700 overflow-hidden p-0.5">
+                  <div id="sim-gauge-ram-bar" class="bar-segment h-full rounded-full bg-charcoal-300" style="width: 33%"></div>
+                </div>
+              </div>
+
+              <!-- Network Gauge -->
+              <div class="space-y-1.5">
+                <div class="flex justify-between text-xs font-mono">
+                  <span class="text-charcoal-200">Network Port Saturation (45KB avg payload)</span>
+                  <span id="sim-gauge-net-txt" class="text-white font-semibold">6.5% (65 / 1000 Mbps)</span>
+                </div>
+                <div class="h-3.5 w-full rounded-full bg-charcoal-900 border border-charcoal-700 overflow-hidden p-0.5">
+                  <div id="sim-gauge-net-bar" class="bar-segment h-full rounded-full bg-charcoal-400" style="width: 7%"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Diagnostic Explanation Box -->
+            <div class="duotone-well p-4 rounded-xl border border-charcoal-750 space-y-1.5">
+              <div class="text-xs font-mono uppercase accent-text font-semibold">Bottleneck Diagnostic & Tuning Tip</div>
+              <p id="sim-diagnostic-text" class="text-xs text-charcoal-200 leading-relaxed">
+                At 180 RPS, your 4 vCPU server is running in its sweet spot (54% CPU, 33% RAM). If traffic spikes above 266 RPS, CPU queues will build up and response times will climb exponentially.
+              </p>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 3: INTERACTIVE LEARNING & FORMULAS     -->
+    <!-- ========================================== -->
+    <section id="view-academy" class="hidden space-y-6">
+      
+      <!-- Intro Banner -->
+      <div class="duotone-card rounded-2xl p-6">
+        <span class="text-xs font-mono uppercase tracking-widest accent-text">Systems Engineering Field Guide</span>
+        <h2 class="text-xl font-bold text-white mt-1">How Server Capacity Planning Actually Works</h2>
+        <p class="text-sm text-charcoal-300 mt-1 max-w-3xl">
+          Whether you are deploying your first VPS or designing a distributed cluster, server sizing boils down to four fundamental laws: <strong>Little's Law for Concurrency</strong>, <strong>CPU Time Slicing</strong>, <strong>RAM Working-Set Caching</strong>, and <strong>I/O Bandwidth</strong>.
+        </p>
+      </div>
+
+      <!-- 4 Core Mental Models Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        <!-- Concept 1: Little's Law -->
+        <div class="duotone-card rounded-2xl p-6 space-y-4">
+          <div class="flex items-center justify-between border-b border-charcoal-750 pb-3">
+            <div>
+              <span class="text-xs font-mono text-charcoal-400">LAW 01 // CONCURRENCY</span>
+              <h3 class="text-base font-bold text-white">Little's Law: Why Slow Queries Kill Servers</h3>
+            </div>
+            <span class="px-2.5 py-1 rounded font-mono text-xs accent-glow accent-text">L = λ × W</span>
+          </div>
+          <p class="text-xs text-charcoal-300 leading-relaxed">
+            The number of active concurrent connections (<strong class="text-white">L</strong>) equals your arrival rate (<strong class="text-white">λ = Requests/sec</strong>) multiplied by the average time a request takes (<strong class="text-white">W = Latency in seconds</strong>).
+          </p>
+          <div class="duotone-well p-4 rounded-xl font-mono text-xs space-y-2">
+            <div class="text-charcoal-400">// Example Comparison at 500 RPS:</div>
+            <div class="flex justify-between text-charcoal-200">
+              <span>Fast API (20ms response):</span>
+              <span class="text-white">500 × 0.02s = <strong>10 concurrent reqs</strong></span>
+            </div>
+            <div class="flex justify-between text-charcoal-200">
+              <span>Slow DB Query (800ms response):</span>
+              <span class="accent-text">500 × 0.80s = <strong>400 concurrent reqs!</strong></span>
+            </div>
+          </div>
+          <p class="text-xs text-charcoal-400">
+            <strong>Takeaway:</strong> Optimizing a slow database query from 800ms down to 20ms reduces the number of simultaneous connections holding onto server RAM and worker threads by <strong>40×</strong>!
+          </p>
+        </div>
+
+        <!-- Concept 2: CPU Time Slicing -->
+        <div class="duotone-card rounded-2xl p-6 space-y-4">
+          <div class="flex items-center justify-between border-b border-charcoal-750 pb-3">
+            <div>
+              <span class="text-xs font-mono text-charcoal-400">LAW 02 // COMPUTE</span>
+              <h3 class="text-base font-bold text-white">The 1,000 Millisecond CPU Budget</h3>
+            </div>
+            <span class="px-2.5 py-1 rounded font-mono text-xs accent-glow accent-text">1 Core = 1,000ms/s</span>
+          </div>
+          <p class="text-xs text-charcoal-300 leading-relaxed">
+            Every 1 vCPU core gives you exactly <strong class="text-white">1,000 milliseconds of CPU compute time per second</strong>. Note that waiting on a database or external API over the network (I/O wait) does <em>not</em> burn CPU ms if your server uses async I/O.
+          </p>
+          <div class="duotone-well p-4 rounded-xl font-mono text-xs space-y-2">
+            <div class="text-charcoal-400">// How many RPS can 1 vCPU core handle?</div>
+            <div class="flex justify-between text-charcoal-200">
+              <span>Static / Cached JSON (2ms CPU):</span>
+              <span class="text-white">1000 ÷ 2ms = <strong>500 RPS / core</strong></span>
+            </div>
+            <div class="flex justify-between text-charcoal-200">
+              <span>SSR React / Heavy ORM (25ms CPU):</span>
+              <span class="text-white">1000 ÷ 25ms = <strong>40 RPS / core</strong></span>
+            </div>
+            <div class="flex justify-between text-charcoal-200">
+              <span>Bcrypt Password Hash (100ms CPU):</span>
+              <span class="accent-text">1000 ÷ 100ms = <strong>10 RPS / core</strong></span>
+            </div>
+          </div>
+          <p class="text-xs text-charcoal-400">
+            <strong>Takeaway:</strong> Always provision enough cores so peak traffic stays under <strong>70% CPU utilization</strong>. Above 80%, queuing theory causes latency to spike nonlinearly.
+          </p>
+        </div>
+
+        <!-- Concept 3: RAM & The Working Set Rule -->
+        <div class="duotone-card rounded-2xl p-6 space-y-4">
+          <div class="flex items-center justify-between border-b border-charcoal-750 pb-3">
+            <div>
+              <span class="text-xs font-mono text-charcoal-400">LAW 03 // MEMORY HIERARCHY</span>
+              <h3 class="text-base font-bold text-white">How Much RAM Does a Database Actually Need?</h3>
+            </div>
+            <span class="px-2.5 py-1 rounded font-mono text-xs accent-glow accent-text">20% Working Set</span>
+          </div>
+          <p class="text-xs text-charcoal-300 leading-relaxed">
+            You do <strong>not</strong> need enough RAM to fit your entire 500 GB database in memory. You only need enough RAM to hold your <strong class="text-white">B-Tree Indexes and "Hot Working Set"</strong> (typically 15%–25% of total DB size).
+          </p>
+          <div class="duotone-well p-4 rounded-xl font-mono text-xs space-y-2">
+            <div class="text-charcoal-400">// Where Server RAM Goes on a 16 GB Node:</div>
+            <div class="flex justify-between text-charcoal-200">
+              <span>Linux Kernel + Systemd + Agents:</span>
+              <span class="text-white">~0.8 GB</span>
+            </div>
+            <div class="flex justify-between text-charcoal-200">
+              <span>App Workers (e.g., 8 × 150MB):</span>
+              <span class="text-white">~1.2 GB</span>
+            </div>
+            <div class="flex justify-between text-charcoal-200">
+              <span>DB Buffer Pool (40%–60% of RAM):</span>
+              <span class="accent-text">~8.0 GB</span>
+            </div>
+            <div class="flex justify-between text-charcoal-200">
+              <span>OS File Cache & Safety Headroom:</span>
+              <span class="text-white">~6.0 GB</span>
+            </div>
+          </div>
+          <p class="text-xs text-charcoal-400">
+            <strong>Takeaway:</strong> If your database has to hit disk for every index lookup, your server's RPS capacity drops by 10×–50× while waiting on disk IOPS.
+          </p>
+        </div>
+
+        <!-- Concept 4: Bandwidth & Storage Math -->
+        <div class="duotone-card rounded-2xl p-6 space-y-4">
+          <div class="flex items-center justify-between border-b border-charcoal-750 pb-3">
+            <div>
+              <span class="text-xs font-mono text-charcoal-400">LAW 04 // NETWORK & DISK</span>
+              <h3 class="text-base font-bold text-white">Bytes vs. Bits (Why 100 Mbps ≠ 100 MB/s)</h3>
+            </div>
+            <span class="px-2.5 py-1 rounded font-mono text-xs accent-glow accent-text">1 Byte = 8 Bits</span>
+          </div>
+          <p class="text-xs text-charcoal-300 leading-relaxed">
+            Network cards are measured in <strong class="text-white">Megabits per second (Mbps)</strong>, while your files and JSON payloads are measured in <strong class="text-white">Kilobytes / Megabytes (KB / MB)</strong>. Always multiply payload Megabytes by 8 (or ~9 with TCP/TLS overhead) to get Megabits!
+          </p>
+          <div class="duotone-well p-4 rounded-xl font-mono text-xs space-y-2">
+            <div class="text-charcoal-400">// Network Conversion Cheat Sheet:</div>
+            <div class="flex justify-between text-charcoal-200">
+              <span>100 Mbps Port Max Transfer:</span>
+              <span class="text-white">~11.5 MB / sec</span>
+            </div>
+            <div class="flex justify-between text-charcoal-200">
+              <span>1 Gbps (1000 Mbps) Port Max:</span>
+              <span class="text-white">~115 MB / sec</span>
+            </div>
+            <div class="flex justify-between text-charcoal-200">
+              <span>1 TB Monthly Bandwidth Limit:</span>
+              <span class="accent-text">~3.1 Mbps continuous 24/7</span>
+            </div>
+          </div>
+          <p class="text-xs text-charcoal-400">
+            <strong>Takeaway:</strong> Serving 1 MB images directly from your app server at 200 RPS requires <span class="font-mono text-white">1,600 Mbps (1.6 Gbps)</span>—saturating a standard 1 Gbps NIC immediately. Offload images/videos to a CDN!
+          </p>
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="border-t border-charcoal-800 bg-charcoal-950/80 py-4 mt-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs font-mono text-charcoal-400">
+      <div>SYS.CAP // Dual-Tone Dark Grey Infrastructure Calculator & Learning Workbench</div>
+      <div class="flex items-center gap-4">
+        <span>All math runs 100% locally in your browser</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- NON-INTRUSIVE TOAST NOTIFICATION (Replaces alert()) -->
+  <div id="toast-box" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 pointer-events-none transition-all duration-300 duotone-card px-4 py-3 rounded-xl border accent-border shadow-2xl flex items-center gap-3">
+    <div class="w-2.5 h-2.5 rounded-full accent-bg"></div>
+    <div id="toast-msg" class="text-xs font-mono text-white">Spec copied to clipboard!</div>
+  </div>
+
+  <!-- APPLICATION JAVASCRIPT ENGINE -->
+  <script>
+    // Global state for the calculator
+    const state = {
+      horizonYears: 1,
+      runtimeName: 'Node.js',
+      lastSummaryText: ''
+    };
+
+    // Standard Cloud RAM Tiers (GB)
+    const RAM_TIERS = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512];
+    // Standard Cloud CPU Tiers (vCPU)
+    const CPU_TIERS = [1, 2, 4, 8, 16, 32, 48, 64, 96, 128];
+    // Standard SSD Tiers (GB)
+    const DISK_TIERS = [25, 50, 80, 160, 240, 320, 480, 640, 960, 1920, 3840, 7680];
+
+    function snapToTier(value, tiers) {
+      for (let i = 0; i < tiers.length; i++) {
+        if (tiers[i] >= value) return tiers[i];
+      }
+      return Math.ceil(value);
+    }
+
+    function formatNumber(num) {
+      return Math.round(num).toLocaleString('en-US');
+    }
+
+    // Switch Top-Level Tabs
+    function switchTab(tabId) {
+      const tabs = ['planner', 'simulator', 'academy'];
+      tabs.forEach(t => {
+        const view = document.getElementById('view-' + t);
+        const btn = document.getElementById('tab-btn-' + t);
+        if (t === tabId) {
+          view.classList.remove('hidden');
+          btn.className = 'tab-btn flex-1 sm:flex-initial px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all flex items-center justify-center gap-2 accent-bg font-semibold shadow';
+        } else {
+          view.classList.add('hidden');
+          btn.className = 'tab-btn flex-1 sm:flex-initial px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all flex items-center justify-center gap-2 text-charcoal-300 hover:text-white hover:bg-charcoal-800';
+        }
+      });
+
+      if (tabId === 'simulator') {
+        runReverseSimulation();
+      }
+    }
+
+    // Set Dual-Tone Accent Color
+    function setAccent(accentName) {
+      document.body.setAttribute('data-accent', accentName);
+    }
+
+    // Set Runtime Memory Preset
+    function setRuntimeMemory(mbPerWorker, name) {
+      state.runtimeName = name;
+      document.getElementById('inp-worker-ram').value = mbPerWorker;
+      
+      const buttons = {
+        35: 'rt-go',
+        110: 'rt-node',
+        160: 'rt-py',
+        380: 'rt-java'
+      };
+      Object.values(buttons).forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.className = 'rt-btn px-2 py-2 rounded-lg text-xs font-mono duotone-pill text-charcoal-300 hover:text-white transition text-center';
+      });
+      const activeId = buttons[mbPerWorker];
+      if (activeId && document.getElementById(activeId)) {
+        document.getElementById(activeId).className = 'rt-btn px-2 py-2 rounded-lg text-xs font-mono accent-glow text-white transition text-center';
+      }
+      recalculateAll();
+    }
+
+    // Set Storage Horizon (1Y, 2Y, 3Y)
+    function setHorizon(years) {
+      state.horizonYears = years;
+      [1, 2, 3].forEach(y => {
+        const btn = document.getElementById('hz-' + y);
+        if (y === years) {
+          btn.className = 'hz-btn px-2 py-1 rounded accent-bg font-bold';
+        } else {
+          btn.className = 'hz-btn px-2 py-1 rounded text-charcoal-400 hover:text-white';
+        }
+      });
+      recalculateAll();
+    }
+
+    // Load Real-World Architecture Presets
+    function loadPreset(presetKey) {
+      const presets = {
+        hobby: {
+          dau: 5000,
+          reqsPerUser: 30,
+          peakMult: 3.0,
+          latency: 80,
+          cpuMs: 8,
+          payload: 28,
+          workerRam: 80,
+          dbSize: 3,
+          dbCachePct: 25,
+          redisRam: 0.5,
+          dailyUploads: 50,
+          logBytes: 400,
+          logDays: 14,
+          backupMult: 1.5
+        },
+        ecommerce: {
+          dau: 50000,
+          reqsPerUser: 50,
+          peakMult: 4.0,
+          latency: 120,
+          cpuMs: 15,
+          payload: 45,
+          workerRam: 110,
+          dbSize: 15,
+          dbCachePct: 20,
+          redisRam: 1.0,
+          dailyUploads: 250,
+          logBytes: 500,
+          logDays: 30,
+          backupMult: 2.0
+        },
+        api: {
+          dau: 500000,
+          reqsPerUser: 90,
+          peakMult: 3.5,
+          latency: 35,
+          cpuMs: 5,
+          payload: 8,
+          workerRam: 45,
+          dbSize: 80,
+          dbCachePct: 25,
+          redisRam: 8.0,
+          dailyUploads: 100,
+          logBytes: 300,
+          logDays: 14,
+          backupMult: 2.5
+        },
+        media: {
+          dau: 150000,
+          reqsPerUser: 65,
+          peakMult: 4.5,
+          latency: 160,
+          cpuMs: 18,
+          payload: 240,
+          workerRam: 150,
+          dbSize: 45,
+          dbCachePct: 20,
+          redisRam: 4.0,
+          dailyUploads: 3500,
+          logBytes: 600,
+          logDays: 30,
+          backupMult: 2.0
+        }
+      };
+
+      const p = presets[presetKey];
+      if (!p) return;
+
+      document.getElementById('inp-dau').value = p.dau;
+      document.getElementById('inp-reqs-per-user').value = p.reqsPerUser;
+      document.getElementById('inp-peak-mult').value = p.peakMult;
+      document.getElementById('inp-latency').value = p.latency;
+      document.getElementById('inp-cpu-ms').value = p.cpuMs;
+      document.getElementById('inp-payload').value = p.payload;
+      document.getElementById('inp-worker-ram').value = p.workerRam;
+      document.getElementById('inp-db-size').value = p.dbSize;
+      document.getElementById('inp-db-cache-pct').value = p.dbCachePct;
+      document.getElementById('inp-redis-ram').value = p.redisRam;
+      document.getElementById('inp-daily-uploads').value = p.dailyUploads;
+      document.getElementById('inp-log-bytes').value = p.logBytes;
+      document.getElementById('inp-log-days').value = p.logDays;
+      document.getElementById('inp-backup-mult').value = p.backupMult;
+
+      // Update preset button active states
+      ['hobby', 'ecommerce', 'api', 'media'].forEach(k => {
+        const btn = document.getElementById('preset-' + k);
+        if (k === presetKey) {
+          btn.className = 'preset-btn px-3 py-1.5 rounded-lg text-xs font-mono accent-glow text-white transition';
+        } else {
+          btn.className = 'preset-btn px-3 py-1.5 rounded-lg text-xs font-mono duotone-pill text-charcoal-200 hover:border-charcoal-400 transition';
+        }
+      });
+
+      recalculateAll();
+    }
+
+    // Core Capacity Planning Calculation Engine
+    function recalculateAll() {
+      // 1. Read Traffic & Compute Inputs
+      const dau = parseFloat(document.getElementById('inp-dau').value);
+      const reqsPerUser = parseFloat(document.getElementById('inp-reqs-per-user').value);
+      const peakMult = parseFloat(document.getElementById('inp-peak-mult').value);
+      const latencyMs = parseFloat(document.getElementById('inp-latency').value);
+      const cpuMs = parseFloat(document.getElementById('inp-cpu-ms').value);
+      const payloadKb = parseFloat(document.getElementById('inp-payload').value);
+
+      // Update Traffic Slider Labels
+      document.getElementById('val-dau').textContent = formatNumber(dau) + ' users';
+      document.getElementById('val-reqs-per-user').textContent = reqsPerUser + ' reqs';
+      document.getElementById('val-peak-mult').textContent = peakMult.toFixed(1) + 'x Avg';
+      document.getElementById('val-latency').textContent = latencyMs + ' ms';
+      document.getElementById('val-cpu-ms').textContent = cpuMs + ' ms';
+      document.getElementById('val-payload').textContent = payloadKb + ' KB';
+
+      // Traffic Math
+      const totalDailyReqs = dau * reqsPerUser;
+      const avgRps = totalDailyReqs / 86400;
+      const peakRps = avgRps * peakMult;
+
+      // Little's Law: Concurrency = Peak RPS * (Latency_ms / 1000)
+      const concurrentConn = Math.max(1, Math.ceil(peakRps * (latencyMs / 1000)));
+
+      // CPU Cores Needed: (Peak RPS * cpuMs / 1000) divided by 0.70 target max load
+      const rawCoresAt100 = (peakRps * cpuMs) / 1000;
+      const safeCoresExact = Math.max(0.5, rawCoresAt100 / 0.70);
+      const recommendedCpuTier = snapToTier(Math.ceil(safeCoresExact), CPU_TIERS);
+
+      // Network Bandwidth Math
+      // 1 KB = 8 Kilobits; add 12% TCP/TLS/HTTP header overhead
+      const peakMbps = (peakRps * payloadKb * 8 * 1.12) / 1000;
+      const monthlyTransferGb = (totalDailyReqs * 30 * payloadKb * 1.12) / (1024 * 1024);
+      const monthlyTransferTb = monthlyTransferGb / 1024;
+
+      // 2. Read RAM Inputs
+      const workerRamMb = parseFloat(document.getElementById('inp-worker-ram').value);
+      const dbSizeGb = parseFloat(document.getElementById('inp-db-size').value);
+      const dbCachePct = parseFloat(document.getElementById('inp-db-cache-pct').value);
+      const redisRamGb = parseFloat(document.getElementById('inp-redis-ram').value);
+
+      // Workers spawned: typically 2 workers per vCPU (capped reasonably for clusters)
+      const workerCount = Math.min(64, Math.max(2, recommendedCpuTier * 2));
+      const osBaseGb = 0.8; // 800MB Linux Kernel + systemd + monitoring
+      // App RAM = workers * workerRamMb + ~2MB per concurrent socket buffer
+      const appRamGb = ((workerCount * workerRamMb) + (concurrentConn * 2.5)) / 1024;
+      const dbBufferGb = dbSizeGb * (dbCachePct / 100);
+      const subtotalRamGb = osBaseGb + appRamGb + dbBufferGb + redisRamGb;
+      // Add 25% OS Page Cache & Anti-OOM Headroom
+      const safetyHeadroomGb = subtotalRamGb * 0.25;
+      const exactRamGb = subtotalRamGb + safetyHeadroomGb;
+      const recommendedRamTier = snapToTier(Math.ceil(exactRamGb), RAM_TIERS);
+
+      // Update RAM Slider Labels
+      document.getElementById('val-worker-ram').textContent = workerRamMb + ' MB';
+      document.getElementById('lbl-worker-count').textContent = workerCount + ' workers';
+      document.getElementById('val-db-size').textContent = dbSizeGb + ' GB';
+      document.getElementById('val-db-cache-pct').textContent = dbCachePct + '% (' + dbBufferGb.toFixed(1) + ' GB)';
+      document.getElementById('val-redis-ram').textContent = redisRamGb.toFixed(1) + ' GB';
+
+      // Update RAM Visual Bar
+      const totalForBar = Math.max(exactRamGb, 0.1);
+      document.getElementById('bar-ram-os').style.width = ((osBaseGb / totalForBar) * 100).toFixed(1) + '%';
+      document.getElementById('bar-ram-app').style.width = ((appRamGb / totalForBar) * 100).toFixed(1) + '%';
+      document.getElementById('bar-ram-db').style.width = ((dbBufferGb / totalForBar) * 100).toFixed(1) + '%';
+      document.getElementById('bar-ram-redis').style.width = ((redisRamGb / totalForBar) * 100).toFixed(1) + '%';
+      document.getElementById('bar-ram-free').style.width = ((safetyHeadroomGb / totalForBar) * 100).toFixed(1) + '%';
+
+      document.getElementById('ram-map-summary').textContent = exactRamGb.toFixed(1) + ' GB → ' + recommendedRamTier + ' GB Tier';
+      document.getElementById('leg-ram-os').textContent = osBaseGb.toFixed(1) + ' GB';
+      document.getElementById('leg-ram-app').textContent = appRamGb.toFixed(1) + ' GB';
+      document.getElementById('leg-ram-db').textContent = dbBufferGb.toFixed(1) + ' GB';
+      document.getElementById('leg-ram-other').textContent = (redisRamGb + safetyHeadroomGb).toFixed(1) + ' GB';
+
+      // 3. Read Storage & IOPS Inputs
+      const dailyUploadsMb = parseFloat(document.getElementById('inp-daily-uploads').value);
+      const logBytes = parseFloat(document.getElementById('inp-log-bytes').value);
+      const logDays = parseFloat(document.getElementById('inp-log-days').value);
+      const backupMult = parseFloat(document.getElementById('inp-backup-mult').value);
+
+      document.getElementById('val-daily-uploads').textContent = dailyUploadsMb >= 1000
+        ? (dailyUploadsMb / 1024).toFixed(2) + ' GB / day'
+        : dailyUploadsMb + ' MB / day';
+      document.getElementById('val-log-bytes').textContent = logBytes + ' Bytes';
+      document.getElementById('val-log-days').textContent = logDays + ' Days';
+      document.getElementById('val-backup-mult').textContent = backupMult.toFixed(1) + 'x';
+
+      // Storage Math over Horizon
+      const baseOsDiskGb = 25;
+      // Assume DB grows by 35% per year
+      const dbStorageWithGrowthGb = dbSizeGb * (1 + (0.35 * state.horizonYears));
+      const mediaStorageGb = (dailyUploadsMb * 365 * state.horizonYears) / 1024;
+      const logsStorageGb = (totalDailyReqs * logBytes * logDays) / (1024 * 1024 * 1024);
+
+      // Backups apply to DB + Media
+      const backupExtraGb = (dbStorageWithGrowthGb + mediaStorageGb) * (backupMult - 1);
+      const rawDiskSubtotal = baseOsDiskGb + dbStorageWithGrowthGb + mediaStorageGb + logsStorageGb + backupExtraGb;
+      // Add 25% free space buffer (80% max utilization rule)
+      const diskBufferGb = rawDiskSubtotal * 0.25;
+      const totalDiskExactGb = rawDiskSubtotal + diskBufferGb;
+      const recommendedDiskTier = snapToTier(Math.ceil(totalDiskExactGb), DISK_TIERS);
+
+      // Estimate Peak IOPS (DB cache misses + log writes + uploads)
+      const cacheMissRatio = Math.max(0.05, 1 - (dbCachePct / 100));
+      const estimatedPeakIops = Math.round((peakRps * 2.2 * cacheMissRatio) + (peakRps * 0.5));
+
+      // Update Storage Breakdown UI
+      document.getElementById('st-hz-txt').textContent = state.horizonYears + ' yr';
+      document.getElementById('st-log-days-txt').textContent = logDays + 'd';
+      document.getElementById('st-db-gb').textContent = dbStorageWithGrowthGb.toFixed(1) + ' GB';
+      document.getElementById('st-media-gb').textContent = mediaStorageGb.toFixed(1) + ' GB';
+      document.getElementById('st-logs-gb').textContent = logsStorageGb.toFixed(1) + ' GB';
+      document.getElementById('st-backup-gb').textContent = (backupExtraGb + diskBufferGb).toFixed(1) + ' GB';
+      document.getElementById('st-total-gb').textContent = recommendedDiskTier >= 1000
+        ? (recommendedDiskTier / 1000).toFixed(2) + ' TB NVMe'
+        : recommendedDiskTier + ' GB NVMe';
+
+      // Update Top Telemetry Bar
+      document.getElementById('sum-peak-rps').textContent = peakRps >= 10 ? formatNumber(peakRps) : peakRps.toFixed(1);
+      document.getElementById('sum-avg-rps').textContent = avgRps >= 10 ? formatNumber(avgRps) : avgRps.toFixed(1);
+      document.getElementById('sum-concurrent').textContent = formatNumber(concurrentConn) + ' conn';
+
+      document.getElementById('sum-cpu-cores').textContent = recommendedCpuTier + (recommendedCpuTier === 1 ? ' Core' : ' Cores');
+      document.getElementById('sum-cpu-raw').textContent = safeCoresExact.toFixed(1) + ' vCPU';
+
+      document.getElementById('sum-ram-tier').textContent = recommendedRamTier + ' GB';
+      document.getElementById('sum-ram-exact').textContent = exactRamGb.toFixed(1) + ' GB';
+      document.getElementById('sum-ram-db').textContent = dbBufferGb.toFixed(1) + ' GB';
+
+      document.getElementById('sum-storage-total').textContent = recommendedDiskTier >= 1000
+        ? (recommendedDiskTier / 1000).toFixed(1) + ' TB'
+        : recommendedDiskTier + ' GB';
+      document.getElementById('sum-iops').textContent = '~' + formatNumber(estimatedPeakIops);
+      document.getElementById('sum-horizon-label').textContent = state.horizonYears + (state.horizonYears === 1 ? ' Year' : ' Years');
+
+      document.getElementById('sum-bandwidth-mbps').textContent = peakMbps >= 100
+        ? Math.round(peakMbps) + ' Mbps'
+        : peakMbps.toFixed(1) + ' Mbps';
+      document.getElementById('sum-bandwidth-tb').textContent = monthlyTransferTb >= 1
+        ? monthlyTransferTb.toFixed(2) + ' TB/mo'
+        : Math.round(monthlyTransferGb) + ' GB/mo';
+
+      // Update Live Formula Box in Module 1
+      document.getElementById('math-daily-reqs').textContent = formatNumber(totalDailyReqs) + ' / day';
+      document.getElementById('math-peak-rps').textContent = peakRps.toFixed(1) + ' req/sec';
+      document.getElementById('math-littles-law').textContent = peakRps.toFixed(0) + ' × ' + (latencyMs / 1000).toFixed(2) + 's = ' + concurrentConn;
+      document.getElementById('math-cores-needed').textContent = safeCoresExact.toFixed(1) + ' → ' + recommendedCpuTier + ' vCPUs';
+
+      // Determine Recommended Topology & Architecture Advice
+      let topologyTitle = 'Single Node VPS';
+      let topologySub = 'Vertical Scale OK';
+      let haStatus = 'Single Node';
+
+      if (recommendedCpuTier >= 16 || recommendedRamTier >= 64 || peakRps > 600) {
+        topologyTitle = 'Load-Balanced Cluster';
+        topologySub = '2–4 App Nodes + Dedicated DB';
+        haStatus = 'Multi-Node HA';
+      } else if (recommendedCpuTier >= 8 || recommendedRamTier >= 16 || peakRps > 200) {
+        topologyTitle = 'Split App + DB Nodes';
+        topologySub = '1 App Server + 1 Managed DB';
+        haStatus = 'Decoupled Tier';
+      }
+
+      document.getElementById('sum-topology').textContent = topologyTitle;
+      document.getElementById('sum-topology-sub').textContent = topologySub;
+      document.getElementById('sum-ha-status').textContent = haStatus;
+
+      // Update Bottom Blueprint Panel
+      let bottleneckLabel = 'Balanced Workload';
+      if (peakMbps > 350) {
+        bottleneckLabel = 'Network Bandwidth Heavy';
+      } else if (safeCoresExact > 12) {
+        bottleneckLabel = 'CPU Compute Bound';
+      } else if (dbBufferGb > 16) {
+        bottleneckLabel = 'Database Memory Bound';
+      } else if (mediaStorageGb > 500) {
+        bottleneckLabel = 'Storage Growth Heavy';
+      }
+      document.getElementById('blueprint-bottleneck').textContent = bottleneckLabel;
+
+      if (recommendedCpuTier <= 4 && recommendedRamTier <= 8) {
+        document.getElementById('bp-node-title').textContent = `1× All-in-One VPS (${recommendedCpuTier} vCPU / ${recommendedRamTier} GB RAM)`;
+        document.getElementById('bp-node-desc').textContent = `A single modern NVMe cloud server easily handles ${Math.round(peakRps)} peak RPS and ${concurrentConn} concurrent sockets without complex orchestration overhead.`;
+      } else {
+        const appNodes = Math.max(2, Math.ceil(recommendedCpuTier / 4));
+        const perNodeCpu = Math.max(2, Math.ceil(recommendedCpuTier / appNodes));
+        const perNodeRam = snapToTier(Math.ceil((appRamGb + osBaseGb + 1) * 1.3), RAM_TIERS);
+        document.getElementById('bp-node-title').textContent = `${appNodes}× App Nodes (${perNodeCpu} vCPU / ${perNodeRam} GB) + Dedicated DB`;
+        document.getElementById('bp-node-desc').textContent = `At ${Math.round(peakRps)} peak RPS, separate your stateless application workers behind a load balancer from your stateful database server.`;
+      }
+
+      document.getElementById('bp-db-title').textContent = `DB Buffer Pool: ${dbBufferGb.toFixed(1)} GB + Redis: ${redisRamGb.toFixed(1)} GB`;
+      document.getElementById('bp-db-desc').textContent = `Keeping ${dbCachePct}% of your ${dbSizeGb} GB database in RAM limits disk I/O to ~${formatNumber(estimatedPeakIops)} IOPS at peak traffic.`;
+
+      document.getElementById('bp-net-title').textContent = `${recommendedDiskTier} GB NVMe + ${monthlyTransferTb.toFixed(1)} TB/mo Egress`;
+      document.getElementById('bp-net-desc').textContent = mediaStorageGb > 100
+        ? `Because user media grows to ${mediaStorageGb.toFixed(0)} GB, store uploads in S3/R2 Object Storage + CDN instead of local block storage.`
+        : `Configure logrotate for your ${logsStorageGb.toFixed(1)} GB of ${logDays}-day logs and run automated daily off-site snapshots.`;
+
+      // Store text for clipboard export
+      state.lastSummaryText = [
+        `=== SYS.CAP // SERVER CAPACITY SPECIFICATION ===`,
+        `Workload: ${formatNumber(dau)} DAU | ${reqsPerUser} req/user/day | ${peakMult}x Peak Multiplier`,
+        `Traffic: ${avgRps.toFixed(1)} Avg RPS | ${peakRps.toFixed(1)} Peak RPS | ${concurrentConn} Concurrent Connections`,
+        `Compute: ${recommendedCpuTier} vCPU Cores (Exact need: ${safeCoresExact.toFixed(1)} cores at ≤70% load)`,
+        `Memory:  ${recommendedRamTier} GB RAM (${exactRamGb.toFixed(1)} GB exact: ${osBaseGb}GB OS + ${appRamGb.toFixed(1)}GB App + ${dbBufferGb.toFixed(1)}GB DB Pool + ${redisRamGb.toFixed(1)}GB Redis)`,
+        `Storage: ${recommendedDiskTier} GB NVMe SSD (${state.horizonYears}Y horizon, ~${estimatedPeakIops} Peak IOPS, ${backupMult}x Backup Factor)`,
+        `Network: ${peakMbps.toFixed(1)} Mbps Peak Bandwidth | ${monthlyTransferTb.toFixed(2)} TB/month Transfer`,
+        `Topology Recommendation: ${topologyTitle} (${topologySub})`
+      ].join('\n');
+    }
+
+    // Reverse Simulator Presets
+    function setSimHardware(cpu, ram, baseDbFraction, nic) {
+      document.getElementById('sim-cpu').value = cpu;
+      document.getElementById('sim-ram').value = ram;
+      document.getElementById('sim-nic').value = nic;
+      // Set sensible base RAM for that tier
+      const sensibleBaseRam = Math.min(ram * 0.45, Math.max(0.5, Math.round(ram * 0.25 * 2) / 2));
+      document.getElementById('sim-base-ram').value = sensibleBaseRam;
+      runReverseSimulation();
+    }
+
+    // Reverse Stress Test Calculation Engine
+    function runReverseSimulation() {
+      const cpuCores = parseFloat(document.getElementById('sim-cpu').value);
+      const totalRamGb = parseFloat(document.getElementById('sim-ram').value);
+      const nicMbps = parseFloat(document.getElementById('sim-nic').value);
+      const appCpuMs = parseFloat(document.getElementById('sim-app-cpu').value);
+      const baseRamGb = parseFloat(document.getElementById('sim-base-ram').value);
+      const testRps = parseFloat(document.getElementById('sim-test-rps').value);
+
+      // Update labels
+      document.getElementById('val-sim-cpu').textContent = cpuCores + (cpuCores === 1 ? ' vCPU' : ' vCPUs');
+      document.getElementById('val-sim-ram').textContent = totalRamGb + ' GB';
+      document.getElementById('val-sim-nic').textContent = nicMbps >= 1000 ? `${nicMbps} Mbps (${nicMbps/1000} Gbps)` : `${nicMbps} Mbps`;
+      document.getElementById('val-sim-app-cpu').textContent = appCpuMs + ' ms';
+      document.getElementById('val-sim-base-ram').textContent = baseRamGb.toFixed(1) + ' GB';
+      document.getElementById('val-sim-test-rps').textContent = formatNumber(testRps) + ' RPS';
+      document.getElementById('sim-current-rps-lbl').textContent = formatNumber(testRps) + ' RPS';
+
+      // 1. Max RPS by CPU (at 80% safe threshold)
+      const maxRpsCpu = Math.floor((cpuCores * 1000 * 0.80) / appCpuMs);
+
+      // 2. Max RPS by RAM
+      // Available RAM for dynamic concurrency & workers = (totalRamGb * 0.85) - baseRamGb
+      const availDynamicRamMb = Math.max(50, ((totalRamGb * 0.85) - baseRamGb) * 1024);
+      // Each RPS at ~100ms latency + worker overhead consumes ~3.5 MB dynamically under load
+      const maxRpsRam = Math.max(0, Math.floor(availDynamicRamMb / 3.5));
+
+      // 3. Max RPS by Network (assuming 45KB avg payload = 0.40 Mbps per RPS)
+      const mbpsPerRps = (45 * 8 * 1.12) / 1000;
+      const maxRpsNet = Math.floor((nicMbps * 0.85) / mbpsPerRps);
+
+      // Find the true bottleneck ceiling
+      const maxSafeRps = Math.max(0, Math.min(maxRpsCpu, maxRpsRam, maxRpsNet));
+      let limitingFactor = 'CPU Compute Cores';
+      if (maxSafeRps === maxRpsRam) limitingFactor = 'Available RAM Headroom';
+      if (maxSafeRps === maxRpsNet) limitingFactor = 'Network Port Speed';
+
+      // Max sustainable DAU (assuming 50 reqs/day and 4x peak factor)
+      const maxDau = Math.floor(((maxSafeRps / 4.0) * 86400) / 50);
+
+      document.getElementById('sim-max-rps').textContent = formatNumber(maxSafeRps) + ' RPS';
+      document.getElementById('sim-limiting-factor').textContent = 'Limited by: ' + limitingFactor;
+      document.getElementById('sim-max-dau').textContent = '~' + formatNumber(maxDau);
+
+      // Calculate Live Utilization at `testRps`
+      const cpuCoresUsed = (testRps * appCpuMs) / 1000;
+      const cpuUtilPct = Math.min(100, Math.round((cpuCoresUsed / cpuCores) * 100));
+
+      const dynamicRamUsedGb = (testRps * 3.5) / 1024;
+      const totalRamUsedGb = baseRamGb + dynamicRamUsedGb;
+      const ramUtilPct = Math.min(100, Math.round((totalRamUsedGb / totalRamGb) * 100));
+
+      const netUsedMbps = testRps * mbpsPerRps;
+      const netUtilPct = Math.min(100, Math.round((netUsedMbps / nicMbps) * 100));
+
+      // Update Gauge Bars & Text
+      document.getElementById('sim-gauge-cpu-txt').textContent = `${cpuUtilPct}% (${cpuCoresUsed.toFixed(1)} / ${cpuCores} Cores)`;
+      document.getElementById('sim-gauge-cpu-bar').style.width = cpuUtilPct + '%';
+
+      document.getElementById('sim-gauge-ram-txt').textContent = `${ramUtilPct}% (${totalRamUsedGb.toFixed(1)} / ${totalRamGb} GB)`;
+      document.getElementById('sim-gauge-ram-bar').style.width = ramUtilPct + '%';
+
+      document.getElementById('sim-gauge-net-txt').textContent = `${netUtilPct}% (${netUsedMbps.toFixed(0)} / ${nicMbps} Mbps)`;
+      document.getElementById('sim-gauge-net-bar').style.width = netUtilPct + '%';
+
+      // Overall Health Status
+      const peakUtil = Math.max(cpuUtilPct, ramUtilPct, netUtilPct);
+      const badgeEl = document.getElementById('sim-health-badge');
+      const subEl = document.getElementById('sim-health-sub');
+      const diagEl = document.getElementById('sim-diagnostic-text');
+
+      if (peakUtil < 70) {
+        badgeEl.textContent = `HEALTHY (${peakUtil}% Peak)`;
+        badgeEl.className = 'text-lg font-mono font-bold text-emerald-400 mt-1';
+        subEl.textContent = 'Fast response times, ample headroom';
+        diagEl.textContent = `At ${formatNumber(testRps)} RPS, your ${cpuCores} vCPU / ${totalRamGb} GB server is operating comfortably. Your first bottleneck (${limitingFactor}) will not occur until ~${formatNumber(maxSafeRps)} RPS.`;
+      } else if (peakUtil < 92) {
+        badgeEl.textContent = `ELEVATED LOAD (${peakUtil}%)`;
+        badgeEl.className = 'text-lg font-mono font-bold text-amber-400 mt-1';
+        subEl.textContent = 'Queue latency starting to climb';
+        diagEl.textContent = `Warning: At ${formatNumber(testRps)} RPS, resource utilization is reaching ${peakUtil}%. Any background cron job or slow query spike could push the server into saturation.`;
+      } else {
+        badgeEl.textContent = `OVERLOADED (${peakUtil}%!)`;
+        badgeEl.className = 'text-lg font-mono font-bold text-rose-400 mt-1';
+        subEl.textContent = 'HTTP 502/504 timeouts & OOM risk';
+        diagEl.textContent = `Critical Bottleneck: ${formatNumber(testRps)} RPS exceeds this server's safe ceiling of ${formatNumber(maxSafeRps)} RPS (${limitingFactor}). Requests are queuing faster than the server can clear them.`;
+      }
+    }
+
+    // Copy Spec Sheet to Clipboard using document.execCommand('copy')
+    function copySpecReport() {
+      const textarea = document.createElement('textarea');
+      textarea.value = state.lastSummaryText;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        showToast('Infrastructure spec copied to clipboard!');
+      } catch (err) {
+        showToast('Could not copy automatically.');
+      }
+      document.body.removeChild(textarea);
+    }
+
+    function showToast(message) {
+      const box = document.getElementById('toast-box');
+      const msg = document.getElementById('toast-msg');
+      msg.textContent = message;
+      box.classList.remove('translate-y-20', 'opacity-0');
+      setTimeout(() => {
+        box.classList.add('translate-y-20', 'opacity-0');
+      }, 2800);
+    }
+
+    // Initialize on load
+    window.onload = function () {
+      recalculateAll();
+      runReverseSimulation();
+    };
+  </script>
+</body>
+</html>
